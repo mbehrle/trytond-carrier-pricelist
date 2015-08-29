@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    tests/test_carrier.py
-
-    :copyright: (C) 2014 by Openlabs Technologies & Consulting (P) Limited
-    :license: BSD, see LICENSE for more details.
-"""
 import unittest
 import datetime
 from decimal import Decimal
