@@ -54,15 +54,11 @@ class Carrier:
 
         shipment = Transaction().context.get('shipment')
         sale = Transaction().context.get('sale')
-
         company = Transaction().context.get('company')
         if not company:
             raise UserError("Company not in context.")
 
         default_currency = Company(company).currency
-
-        if not sale and not shipment:
-            return Decimal('0'), default_currency.id
 
         if self.carrier_cost_method != 'pricelist':
             return super(Carrier, self).get_sale_price()
