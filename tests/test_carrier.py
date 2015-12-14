@@ -236,6 +236,7 @@ class CarrierTestCase(unittest.TestCase):
             'carrier_cost_method': 'pricelist',
             'carrier_product': carrier_product.id,
             'price_list': carrier_price_list.id,
+            'currency': self.currency,
         }])
 
         unit, = self.Uom.search([('name', '=', 'Unit')])
