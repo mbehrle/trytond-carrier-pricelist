@@ -52,3 +52,19 @@ class ShipmentOut:
                     Decimal(move.quantity)
 
         return total, default_currency.id
+
+    def get_shipping_rate(self, carrier, carrier_service=None, silent=False):
+        Currency = Pool().get('currency.currency')
+
+        cost, currency_id = self.get_pricelist_shipping_cost()
+        if carrier.carrier_cost_method == 'pricelist':
+            rate_dict = {
+                'carrier_service': carrier_service,
+                'cost': cost,
+                'cost_currency': Currency(currency_id),
+                'carrier': carrier,
+                'display_name': carrier.rec_name
+            }
+            return [rate_dict]
+
+        return []

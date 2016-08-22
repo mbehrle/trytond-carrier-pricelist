@@ -7,11 +7,13 @@ from dateutil.relativedelta import relativedelta
 import pycountry
 
 import trytond.tests.test_tryton
-from trytond.tests.test_tryton import POOL, USER, DB_NAME, CONTEXT
+from trytond.tests.test_tryton import POOL, USER,\
+ CONTEXT, ModuleTestCase, with_transaction
 from trytond.transaction import Transaction
 
 
-class CarrierTestCase(unittest.TestCase):
+class CarrierTestCase(ModuleTestCase):
+    module = 'carrier_pricelist'
 
     def setUp(self):
         """
@@ -82,7 +84,9 @@ class CarrierTestCase(unittest.TestCase):
         account_create_chart = POOL.get(
             'account.create_chart', type="wizard")
 
-        account_template, = AccountTemplate.search([('parent', '=', None)])
+        account_template, = AccountTemplate.search([
+            ('parent', '=', None),
+            ('name', '=', 'Minimal Account Chart')])
 
         session_id, _, _ = account_create_chart.create()
         create_chart = account_create_chart(session_id)
@@ -283,57 +287,55 @@ class CarrierTestCase(unittest.TestCase):
             }])]
         }])
 
+    @with_transaction()
     def test_0010_test_shipping_price(self):
         """Test shipping price
         """
-        with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            self.setup_defaults()
+        self.setup_defaults()
 
-            # Create sale order
-            sale, = self.Sale.create([{
-                'reference': 'S-1001',
-                'company': self.company,
-                'currency': self.currency,
-                'payment_term': self.payment_term,
-                'party': self.sale_party.id,
-                'invoice_address': self.sale_party.addresses[0].id,
-                'shipment_address': self.sale_party.addresses[0].id,
-                'carrier': self.carrier.id,
-                'lines': [
-                    ('create', [{
-                        'type': 'line',
-                        'quantity': 2,
-                        'product': self.product1,
-                        'unit_price': Decimal('100.00'),
-                        'description': 'Test Description1',
-                        'unit': self.product1.template.default_uom,
-                    }, {
-                        'type': 'line',
-                        'quantity': 2,
-                        'product': self.product2,
-                        'unit_price': Decimal('50.00'),
-                        'description': 'Test Description2',
-                        'unit': self.product2.template.default_uom,
-                    }]),
-                ]
-            }])
+        # Create sale order
+        sale, = self.Sale.create([{
+            'reference': 'S-1001',
+            'company': self.company,
+            'currency': self.currency,
+            'payment_term': self.payment_term,
+            'party': self.sale_party.id,
+            'invoice_address': self.sale_party.addresses[0].id,
+            'shipment_address': self.sale_party.addresses[0].id,
+            'carrier': self.carrier.id,
+            'lines': [
+                ('create', [{
+                    'type': 'line',
+                    'quantity': 2,
+                    'product': self.product1,
+                    'unit_price': Decimal('100.00'),
+                    'description': 'Test Description1',
+                    'unit': self.product1.template.default_uom,
+                }, {
+                    'type': 'line',
+                    'quantity': 2,
+                    'product': self.product2,
+                    'unit_price': Decimal('50.00'),
+                    'description': 'Test Description2',
+                    'unit': self.product2.template.default_uom,
+                }]),
+            ]
+        }])
 
-            self.assertEqual(sale.total_amount, Decimal('300'))
+        self.assertEqual(sale.total_amount, Decimal('300'))
 
-            with Transaction().set_context(company=self.company.id):
-                # Quote the sale
-                self.Sale.quote([sale])
-                self.Sale.confirm([sale])
-                self.Sale.process([sale])
-
-            # Shipping line is added and total amount got updated.
-            self.assertEqual(len(sale.lines), 3)
-            self.assertEqual(sale.total_amount, Decimal('320'))
+        with Transaction().set_context(company=self.company.id):
+            # Quote the sale
+            self.Sale.quote([sale])
+            self.Sale.confirm([sale])
+            self.Sale.process([sale])
 
             self.assertEqual(len(sale.shipments), 1)
 
             shipment, = sale.shipments
-            self.assertEqual(shipment.cost, Decimal(20))
+
+            self.assertIsNotNone(sale.get_shipping_rate(self.carrier))
+            self.assertIsNotNone(shipment.get_shipping_rate(self.carrier))
 
 
 def suite():

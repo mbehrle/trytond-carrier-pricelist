@@ -106,26 +106,19 @@ class Sale:
 
         return total, self.currency.id
 
-    def get_pricelist_shipping_rates(self, silent=True):
-        """Get the shipping rates based on pricelist.
-        """
-        Carrier = Pool().get('carrier')
-
-        carrier, = Carrier.search([('carrier_cost_method', '=', 'pricelist')])
+    def get_shipping_rate(self, carrier, carrier_service=None, silent=False):
+        Currency = Pool().get('currency.currency')
 
         cost, currency_id = self.get_pricelist_shipping_cost()
 
-        return [(
-            carrier.party.name,
-            cost, currency_id, {}, {
-                'carrier_id': self.id
+        if carrier.carrier_cost_method == 'pricelist':
+            rate_dict = {
+                'carrier_service': carrier_service,
+                'cost': cost,
+                'cost_currency': Currency(currency_id),
+                'carrier': carrier,
+                'display_name': carrier.rec_name
             }
-        )]
+            return [rate_dict]
 
-    @classmethod
-    def quote(cls, sales):
-        res = super(Sale, cls).quote(sales)
-
-        for sale in sales:
-            sale.update_pricelist_shipment_cost()
-        return res
+        return []
