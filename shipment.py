@@ -54,8 +54,11 @@ class ShipmentOut:
         return total, default_currency.id
 
     def get_shipping_rate(self, carrier, carrier_service=None, silent=False):
+        # TODO: Fix this method and remove return
+        return super(ShipmentOut, self).get_shipping_rate(
+            carrier, carrier_service, silent
+        )
         Currency = Pool().get('currency.currency')
-
         cost, currency_id = self.get_pricelist_shipping_cost()
         if carrier.carrier_cost_method == 'pricelist':
             rate_dict = {
