@@ -12,17 +12,6 @@ __all__ = ['Sale']
 class Sale:
     __name__ = "sale.sale"
 
-    def _get_carrier_context(self):
-        "Pass sale in the context"
-        context = super(Sale, self)._get_carrier_context()
-
-        if self.carrier.carrier_cost_method != 'pricelist':
-            return context
-
-        context = context.copy()
-        context['sale'] = self.id
-        return context
-
     def on_change_lines(self):
         """Pass a flag in context which indicates the get_sale_price method
         of pricelist carrier not to calculate cost on each line change
